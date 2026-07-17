@@ -282,8 +282,17 @@ if HAS_LANGSMITH:
         "LANGSMITH_PROJECT": LANGSMITH_PROJECT,
     })
 
-from langgraph_agent.agent import run_inquiry
+# The agent module configures its tracing backend at IMPORT time. If you changed the
+# backend (e.g. enabled LangSmith) after it was first imported this session, a plain
+# `import` would return the stale cached module. Import fresh so the current env vars
+# take effect on the notebook (orchestrator) side too.
+import importlib
 import mlflow
+import langgraph_agent.agent as _agent_mod
+
+_agent_mod = importlib.reload(_agent_mod)
+run_inquiry = _agent_mod.run_inquiry
+print(f"orchestrator tracing backend: {_agent_mod.TRACING_BACKEND}")
 
 result = run_inquiry(
     "What is the recommended dosing of Cardizafen in patients with severe renal "
