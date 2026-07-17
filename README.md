@@ -101,7 +101,28 @@ distributed-tracing-examples/
 
 ## Quick start
 
+### On Databricks (fastest — the workshop notebook)
+
+Add this repo as a **Git folder** and run the notebook; no local setup needed.
+
+1. In your Databricks workspace, left sidebar → **Workspace**.
+2. Go to your home folder (**Home**, or **Users → your-email**).
+3. **Create** (top-right) → **Git folder**.
+   *(Older UIs: click the **Repos** icon → **Add Repo**.)*
+4. **Git repository URL**:
+   `https://github.com/satxsam/distributed-tracing-examples`
+   Provider auto-detects as GitHub → **Create Git folder**. (Public repo — no token needed.)
+5. Open `workshop/distributed_tracing_workshop` inside the folder, attach it to
+   **Serverless** (or any cluster with internet egress), fill in the widget fields at
+   the top, and run top to bottom.
+
+See [`workshop/`](workshop/) for participant + facilitator details.
+
+### Locally (laptop)
+
 ```bash
+git clone https://github.com/satxsam/distributed-tracing-examples
+cd distributed-tracing-examples
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt -r shared/databricks_agent/requirements.txt
 cp .env.example .env   # then edit

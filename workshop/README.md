@@ -19,12 +19,16 @@ notebook launches as a local background process on the cluster driver.
 ## For participants
 
 **Get the code into your workspace** (whichever your facilitator chose):
+- **Git folder (recommended)**: left sidebar → **Workspace** → your home folder →
+  **Create** (top-right) → **Git folder**. Paste
+  `https://github.com/satxsam/distributed-tracing-examples` as the Git repository URL
+  (public — no token needed) → **Create Git folder**. Then open
+  `workshop/distributed_tracing_workshop` from inside it.
+  *(Older UIs: click the **Repos** icon → **Add Repo**.)*
 - **Zip upload**: unzip the `distributed-tracing-examples` folder, then in the workspace
   UI use **Workspace → (your folder) → Import → File/Folder** and upload the whole
   `distributed-tracing-examples` folder so the structure (`shared/`, `workshop/`) is
   preserved. Open `workshop/distributed_tracing_workshop`.
-- **Git folder**: **Repos → Add Repo**, paste the repo URL, open
-  `workshop/distributed_tracing_workshop` from inside it.
 
 **Run it**: attach the notebook to **Serverless** (or any cluster with internet egress),
 fill in the widget fields at the top (catalog, warehouse id, data schema, FM endpoint,

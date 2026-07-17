@@ -89,12 +89,19 @@ Then participants set `LANGSMITH_API_KEY = dbutils.secrets.get("workshop", "lang
 in Module 0.1. (A shared key is fine — traces still separate by per-user project.)
 Leaving the key blank runs MLflow-only.
 
-### 6. Import the repo as a Git folder
+### 6. Distribute the code
 
-Repos → Add Repo → this repo's URL. Participants open
-`workshop/distributed_tracing_workshop.py` from **inside** the Git folder — the
-notebook auto-detects `shared/` relative to itself. (If you distribute the notebook
-some other way, participants must set `REPO_ROOT` manually so `shared/` resolves.)
+**Git folder (recommended).** Point participants at the public repo:
+`https://github.com/satxsam/distributed-tracing-examples`. Each person adds it via
+**Workspace → their home folder → Create → Git folder** (older UIs: **Repos → Add
+Repo**), pastes the URL, and opens `workshop/distributed_tracing_workshop` from
+**inside** the Git folder — the notebook auto-detects `shared/` relative to itself.
+No GitHub token is needed for a public repo.
+
+**Zip alternative.** If Git folders aren't available, hand out a zip of the repo;
+participants **Workspace → Import** the whole folder (preserving `shared/`, `workshop/`).
+Either way, if the notebook is moved somewhere the sibling `shared/` no longer resolves,
+set `REPO_ROOT` manually near the top of Module 0.2.
 
 ### 7. Compute
 
