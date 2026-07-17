@@ -337,12 +337,26 @@ print("\n✅ Unified: the local agent's spans are nested in the orchestrator's t
 # MAGIC %md
 # MAGIC ## Module B — The same run, in LangSmith too (optional)
 # MAGIC
-# MAGIC If you set `LANGSMITH_API_KEY` in Module 0, `TRACING_BACKEND` is already `both`, so
+# MAGIC If you set `LANGSMITH_API_KEY` in Module 0, `TRACING_BACKEND` is `both`, so
 # MAGIC **Module A's run was also recorded to LangSmith** — no extra work. Open your
 # MAGIC LangSmith project (`dtrace-<your-username>`) and you'll find the same flow as a
 # MAGIC unified trace there. One run, two observability backends.
 # MAGIC
-# MAGIC The cell below prints a direct link if LangSmith is enabled.
+# MAGIC > **Order matters.** A LangSmith project is created only when a trace is first sent
+# MAGIC > to it. So you must set the key **before** the run that populates it:
+# MAGIC >
+# MAGIC > 1. Put your key in the **LangSmith API key** widget (Module 0.1) → re-run **0.2**
+# MAGIC >    (it should print `langsmith=yes`).
+# MAGIC > 2. Re-run **Module 0.5** → it relaunches the agent in `both` mode and prints
+# MAGIC >    `tracing backend for this run: both`.
+# MAGIC > 3. Re-run **Module A** → this creates + fills the LangSmith project.
+# MAGIC > 4. Then run the cell below.
+# MAGIC >
+# MAGIC > If you ran Module A while LangSmith was off, the project won't exist yet and you'll
+# MAGIC > get a "project not found" error here — just do the four steps above.
+# MAGIC
+# MAGIC The cell below prints a direct link and verifies the local agent's spans reached
+# MAGIC LangSmith (i.e. trace context propagated across the process boundary).
 
 # COMMAND ----------
 
