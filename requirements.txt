@@ -1,0 +1,9 @@
+# LangGraph orchestrator (client side) + local dev
+langgraph>=0.2.50
+langchain-core>=0.3.0
+langsmith>=0.1.147
+mlflow>=3.14.0          # MLflow tracing backend (TRACING_BACKEND=mlflow|both)
+openai>=1.40.0
+requests>=2.31.0
+python-dotenv>=1.0.0
+databricks-sdk>=0.30.0

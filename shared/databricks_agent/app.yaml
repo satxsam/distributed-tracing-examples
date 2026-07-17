@@ -1,0 +1,58 @@
+# Databricks App config for the field-medical agent (FastAPI).
+#
+# Deploy (see repo README "Deploy as a Databricks App" for the full sequence):
+#   databricks apps create field-medical-agent
+#   databricks sync ./databricks_agent /Workspace/Users/<you>/apps/field-medical-agent
+#   databricks apps deploy field-medical-agent \
+#     --source-code-path /Workspace/Users/<you>/apps/field-medical-agent
+#
+# Auth: the Apps runtime injects DATABRICKS_CLIENT_ID / _SECRET for the app's
+# service principal. Our WorkspaceClient() / FMAPI client pick these up
+# automatically (no profile, no token in this file).
+command: ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
+
+env:
+  # Which backend(s) to trace into: langsmith | mlflow | both.
+  - name: TRACING_BACKEND
+    value: "both"
+
+  # Foundation Model API endpoint (must exist in the workspace).
+  - name: FMAPI_ENDPOINT
+    value: "databricks-claude-sonnet-4-5"
+
+  # UC data source for the field-medical reference tables.
+  - name: UC_CATALOG
+    value: "main"
+  - name: UC_SCHEMA
+    value: "field_medical"
+
+  # SQL warehouse the agent queries — bound to the app's "sql-warehouse" resource.
+  - name: DATABRICKS_WAREHOUSE_ID
+    valueFrom: "sql-warehouse"
+
+  # ── LangSmith (used when TRACING_BACKEND is langsmith or both) ──
+  # Trace to the shared project. The API key comes from a secret resource
+  # keyed "langsmith-api-key" (never inline the key here).
+  - name: LANGSMITH_TRACING
+    value: "true"
+  - name: LANGSMITH_PROJECT
+    value: "dbx-langgraph-distributed-tracing"
+  - name: LANGSMITH_ENDPOINT
+    value: "https://api.smith.langchain.com"
+  - name: LANGSMITH_API_KEY
+    valueFrom: "langsmith-api-key"
+
+  # ── MLflow (used when TRACING_BACKEND is mlflow or both) ──
+  # Distributed traces merge only when stored in a Unity Catalog schema.
+  - name: MLFLOW_TRACKING_URI
+    value: "databricks"
+  - name: MLFLOW_EXPERIMENT
+    value: "/Users/you@example.com/distributed-tracing-uc"
+  - name: MLFLOW_UC_CATALOG
+    value: "your_catalog"
+  - name: MLFLOW_UC_SCHEMA
+    value: "mlflow_traces"
+  - name: MLFLOW_UC_TABLE_PREFIX
+    value: "dtdemo"
+  - name: MLFLOW_TRACING_SQL_WAREHOUSE_ID
+    valueFrom: "sql-warehouse"

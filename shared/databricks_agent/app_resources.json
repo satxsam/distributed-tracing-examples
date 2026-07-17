@@ -1,0 +1,21 @@
+{
+  "resources": [
+    {
+      "name": "sql-warehouse",
+      "description": "Warehouse for field-medical UC queries",
+      "sql_warehouse": {
+        "id": "<YOUR_SQL_WAREHOUSE_ID>",
+        "permission": "CAN_USE"
+      }
+    },
+    {
+      "name": "langsmith-api-key",
+      "description": "LangSmith API key for distributed tracing",
+      "secret": {
+        "scope": "field-medical-agent",
+        "key": "langsmith-api-key",
+        "permission": "READ"
+      }
+    }
+  ]
+}
