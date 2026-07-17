@@ -54,15 +54,15 @@
 # COMMAND ----------
 
 # Widgets = editable fields at the top of the notebook (no code editing needed).
+# The reference data is seeded into your OWN schema (Module 0.3), so there's no
+# shared data schema to configure — just a catalog you can create a schema in.
 dbutils.widgets.text("workshop_catalog", "workshop", "Catalog (you can CREATE SCHEMA in)")
 dbutils.widgets.text("sql_warehouse_id", "", "Shared SQL warehouse ID")
-dbutils.widgets.text("data_schema", "main.field_medical", "Reference data schema")
 dbutils.widgets.text("fmapi_endpoint", "databricks-claude-sonnet-4-5", "Foundation Model endpoint")
 dbutils.widgets.text("langsmith_api_key", "", "LangSmith API key (optional — blank = MLflow only)")
 
 WORKSHOP_CATALOG = dbutils.widgets.get("workshop_catalog")
 SQL_WAREHOUSE_ID = dbutils.widgets.get("sql_warehouse_id")
-DATA_SCHEMA = dbutils.widgets.get("data_schema")
 FMAPI_ENDPOINT = dbutils.widgets.get("fmapi_endpoint")
 LANGSMITH_API_KEY = dbutils.widgets.get("langsmith_api_key")
 AGENT_PORT = 8010  # local port for your agent (your own driver — no collision)
@@ -98,30 +98,51 @@ MLFLOW_UC_SCHEMA = f"dtrace_{SLUG}"                       # your own schema in t
 MLFLOW_UC_TABLE_PREFIX = "traces"
 LANGSMITH_PROJECT = f"dtrace-{SLUG}"
 
+# Your own copy of the reference data lives in the same personal schema — created
+# in the next cell, so no shared/admin data setup is needed.
+DATA_CATALOG = WORKSHOP_CATALOG
+DATA_SCHEMA_NAME = MLFLOW_UC_SCHEMA
+
 HAS_LANGSMITH = bool(LANGSMITH_API_KEY)
 TRACING_BACKEND = "both" if HAS_LANGSMITH else "mlflow"
 
 print(f"User:              {USER}")
 print(f"Tracing backend:   {TRACING_BACKEND}")
 print(f"MLflow experiment: {MLFLOW_EXPERIMENT}")
-print(f"UC trace schema:   {WORKSHOP_CATALOG}.{MLFLOW_UC_SCHEMA}")
+print(f"Your schema:       {WORKSHOP_CATALOG}.{MLFLOW_UC_SCHEMA}  (holds your data + traces)")
 if HAS_LANGSMITH:
     print(f"LangSmith project: {LANGSMITH_PROJECT}")
 
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ### 0.3 — Create your private UC schema for trace storage
+# MAGIC ### 0.3 — Create your private schema + seed your own sample data
 # MAGIC
-# MAGIC On Databricks, distributed traces merge across processes **only when stored in a
-# MAGIC Unity Catalog schema** (the classic experiment store does not merge them). You get
-# MAGIC your own schema so your trace tables are isolated from everyone else's.
+# MAGIC You get your own UC schema, which holds two things:
+# MAGIC - The **sample reference data** the agent queries (`products`, `adverse_events`) —
+# MAGIC   seeded here from `shared/sample_data.py`, so **no facilitator/admin data setup is
+# MAGIC   required**. Everyone creates their own small copy.
+# MAGIC - Your **MLflow trace tables** (created automatically when tracing starts). On
+# MAGIC   Databricks, distributed traces merge across processes only when stored in a Unity
+# MAGIC   Catalog schema — this is that schema, isolated to you.
 
 # COMMAND ----------
 
+import sample_data
+from databricks.sdk import WorkspaceClient
+
 spark.sql(f"CREATE SCHEMA IF NOT EXISTS {WORKSHOP_CATALOG}.{MLFLOW_UC_SCHEMA} "
           f"COMMENT 'Distributed-tracing workshop — {USER}'")
-print(f"Ready: {WORKSHOP_CATALOG}.{MLFLOW_UC_SCHEMA}")
+
+# Seed YOUR copy of the reference data (idempotent) via the shared SQL warehouse.
+sample_data.seed(
+    DATA_CATALOG, DATA_SCHEMA_NAME,
+    warehouse_id=SQL_WAREHOUSE_ID, workspace_client=WorkspaceClient(),
+)
+n_products = spark.table(f"{DATA_CATALOG}.{DATA_SCHEMA_NAME}.products").count()
+n_events = spark.table(f"{DATA_CATALOG}.{DATA_SCHEMA_NAME}.adverse_events").count()
+print(f"Ready: {WORKSHOP_CATALOG}.{MLFLOW_UC_SCHEMA} "
+      f"({n_products} products, {n_events} adverse events)")
 
 # COMMAND ----------
 
@@ -143,8 +164,8 @@ agent_env = dict(os.environ)
 agent_env.update({
     "TRACING_BACKEND": TRACING_BACKEND,
     "FMAPI_ENDPOINT": FMAPI_ENDPOINT,
-    "UC_CATALOG": DATA_SCHEMA.split(".")[0],
-    "UC_SCHEMA": DATA_SCHEMA.split(".")[1],
+    "UC_CATALOG": DATA_CATALOG,
+    "UC_SCHEMA": DATA_SCHEMA_NAME,
     "DATABRICKS_WAREHOUSE_ID": SQL_WAREHOUSE_ID,
     "MLFLOW_TRACKING_URI": "databricks",
     "MLFLOW_EXPERIMENT": MLFLOW_EXPERIMENT,

@@ -18,12 +18,14 @@ Derived from their `current_user()` in Module 0, e.g. `jane.doe@example.com`:
 | Resource | Value | Isolation |
 |----------|-------|-----------|
 | MLflow experiment | `/Users/<user>/dtrace-workshop` | user folder — private by default |
-| UC trace schema | `<WORKSHOP_CATALOG>.dtrace_<user_slug>` | one schema per person |
+| UC schema (data + traces) | `<WORKSHOP_CATALOG>.dtrace_<user_slug>` | one schema per person |
+| Sample data | `…dtrace_<slug>.products` / `.adverse_events` | seeded per person, own copy |
 | MLflow trace tables | `…dtrace_<slug>.traces_otel_spans` etc. | in their own schema |
 | LangSmith project | `dtrace-<user_slug>` | one project per person |
 | Local agent | FastAPI on `127.0.0.1:8010` **on their own driver** | no cross-participant port collisions |
 
-Shared: the SQL warehouse and the read-only `main.field_medical` reference data.
+Shared: only the SQL warehouse. (Even the sample data is per-participant — no shared
+tables to pre-create.)
 
 ---
 
@@ -53,20 +55,17 @@ Warehouse → Permissions → add <participants-group> → Can use
 Note its **warehouse ID** (Warehouse → Connection details, or the URL) — participants
 paste it into Module 0.1.
 
-### 3. Seed the reference data (once, shared read-only)
+### 3. Reference data — nothing to do
 
-Run [`../shared/databricks_agent/seed_data.sql`](../shared/databricks_agent/seed_data.sql)
-on the warehouse. It creates `main.field_medical.products` + `.adverse_events`
-(3 fictional drugs). Grant read to the group:
+**No data setup required.** Each participant's notebook seeds its own copy of the
+sample reference data (`products` + `adverse_events`, from
+[`../shared/sample_data.py`](../shared/sample_data.py)) into their personal schema in
+Module 0.3. This is why they only need `CREATE SCHEMA` on the catalog (step 1) — no one
+needs pre-existing tables or a shared read grant.
 
-```sql
-GRANT USE CATALOG ON CATALOG main                       TO `<participants-group>`;
-GRANT USE SCHEMA  ON SCHEMA  main.field_medical         TO `<participants-group>`;
-GRANT SELECT      ON SCHEMA  main.field_medical         TO `<participants-group>`;
-```
-
-(If `main` is locked down, seed into any shared catalog and set `DATA_SCHEMA`
-accordingly in Module 0.1.)
+*(For the laptop/manual path, [`../shared/databricks_agent/seed_data.sql`](../shared/databricks_agent/seed_data.sql)
+is the same data as a standalone script — generated from `sample_data.py`, so they never
+drift.)*
 
 ### 4. Foundation Model access
 
