@@ -210,6 +210,17 @@ if HAS_LANGSMITH:
         "LANGSMITH_PROJECT": LANGSMITH_PROJECT,
     })
 
+# Re-running this cell must RELAUNCH cleanly — otherwise an old agent (e.g. still in
+# mlflow-only mode from a previous run) stays bound to the port and you'd keep hitting
+# it after changing the backend. Stop any previous agent and free the port first.
+try:
+    _agent.terminate()
+    _agent.wait(timeout=10)
+except Exception:
+    pass
+subprocess.run(["bash", "-lc", f"fuser -k {AGENT_PORT}/tcp 2>/dev/null || true"])
+time.sleep(2)
+
 _agent = subprocess.Popen(
     [sys.executable, "-m", "uvicorn", "databricks_agent.app:app",
      "--host", "127.0.0.1", "--port", str(AGENT_PORT), "--log-level", "warning"],
@@ -239,6 +250,8 @@ if not health:
         "in-process (background-thread) fallback that avoids the subprocess."
     )
 print("Agent is up:", health)
+print(f"→ tracing backend for this run: {TRACING_BACKEND}"
+      + ("  (LangSmith + MLflow)" if HAS_LANGSMITH else "  (MLflow only)"))
 
 # COMMAND ----------
 
@@ -334,16 +347,31 @@ print("\n✅ Unified: the local agent's spans are nested in the orchestrator's t
 # COMMAND ----------
 
 if HAS_LANGSMITH:
+    import time as _t
+
     from langsmith import Client
 
     c = Client(api_key=LANGSMITH_API_KEY)
+    _t.sleep(5)  # let spans finish flushing to LangSmith
     root = list(c.list_runs(project_name=LANGSMITH_PROJECT, is_root=True, limit=1))[0]
     allr = list(c.list_runs(project_name=LANGSMITH_PROJECT, trace_id=root.trace_id))
-    print(f"LangSmith unified trace: {len(allr)} spans")
+    names = {r.name for r in allr}
+    print(f"LangSmith trace: {len(allr)} spans -> {sorted(names)}")
     print(root.url)
+    # The proof: the LOCAL AGENT's spans (server side) appear in the LangSmith trace,
+    # i.e. trace context propagated across the process boundary into LangSmith too.
+    server_spans = {"databricks_field_medical_agent", "uc_genie_lookup"}
+    assert server_spans <= names, (
+        "server spans missing from LangSmith — the agent may still be running in a "
+        "previous backend mode. Re-run Module 0.5 (it relaunches the agent) and Module A."
+    )
+    print("\n✅ LangSmith integration verified: the local agent's spans are nested in "
+          "the orchestrator's LangSmith trace — the SAME run also produced the MLflow "
+          "trace from Module A.")
 else:
-    print("LangSmith not configured — set LANGSMITH_API_KEY in Module 0 to enable, then "
-          "re-run Module 0.5 (relaunch agent) and Module A.")
+    print("LangSmith not configured. To enable: put your key in the 'LangSmith API key' "
+          "widget (Module 0.1), re-run 0.2, then re-run Module 0.5 (relaunches the agent "
+          "in 'both' mode) and Module A, then this cell.")
 
 # COMMAND ----------
 
