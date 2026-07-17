@@ -74,9 +74,11 @@ print("↑ Fields added at the top of the notebook. Fill in at least 'Shared SQL
 
 # COMMAND ----------
 
-WORKSHOP_CATALOG = dbutils.widgets.get("workshop_catalog").strip()
+# A blank widget returns "" (defaults don't always auto-populate on serverless), so
+# fall back to the intended default when a field is left empty.
+WORKSHOP_CATALOG = dbutils.widgets.get("workshop_catalog").strip() or "workshop"
 SQL_WAREHOUSE_ID = dbutils.widgets.get("sql_warehouse_id").strip()
-FMAPI_ENDPOINT = dbutils.widgets.get("fmapi_endpoint").strip()
+FMAPI_ENDPOINT = dbutils.widgets.get("fmapi_endpoint").strip() or "databricks-claude-sonnet-4-5"
 LANGSMITH_API_KEY = dbutils.widgets.get("langsmith_api_key").strip()
 AGENT_PORT = 8010  # local port for your agent (your own driver — no collision)
 
