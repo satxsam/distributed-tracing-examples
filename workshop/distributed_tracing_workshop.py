@@ -45,34 +45,58 @@
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ### 0.1 — Workshop settings
+# MAGIC ### 0.1 — Create the settings fields
 # MAGIC
-# MAGIC These appear as **fillable fields at the top of the notebook** (Databricks widgets).
-# MAGIC Your facilitator gives you the first three; the rest have sensible defaults. Fill
-# MAGIC them in, then run the notebook top to bottom.
+# MAGIC Run this cell **first**. It adds fillable fields (Databricks widgets) at the very
+# MAGIC top of the notebook. Nothing else happens yet — you fill them in the next step.
 
 # COMMAND ----------
 
 # Widgets = editable fields at the top of the notebook (no code editing needed).
-# The reference data is seeded into your OWN schema (Module 0.3), so there's no
+# The reference data is seeded into your OWN schema (Module 0.4), so there's no
 # shared data schema to configure — just a catalog you can create a schema in.
 dbutils.widgets.text("workshop_catalog", "workshop", "Catalog (you can CREATE SCHEMA in)")
 dbutils.widgets.text("sql_warehouse_id", "", "Shared SQL warehouse ID")
 dbutils.widgets.text("fmapi_endpoint", "databricks-claude-sonnet-4-5", "Foundation Model endpoint")
 dbutils.widgets.text("langsmith_api_key", "", "LangSmith API key (optional — blank = MLflow only)")
 
-WORKSHOP_CATALOG = dbutils.widgets.get("workshop_catalog")
-SQL_WAREHOUSE_ID = dbutils.widgets.get("sql_warehouse_id")
-FMAPI_ENDPOINT = dbutils.widgets.get("fmapi_endpoint")
-LANGSMITH_API_KEY = dbutils.widgets.get("langsmith_api_key")
-AGENT_PORT = 8010  # local port for your agent (your own driver — no collision)
-
-assert SQL_WAREHOUSE_ID, "Set the 'Shared SQL warehouse ID' widget (from your facilitator)."
+print("↑ Fields added at the top of the notebook. Fill in at least 'Shared SQL "
+      "warehouse ID' and 'Catalog', then run the next cell.")
 
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ### 0.2 — Derive your personal namespace and wire up the code
+# MAGIC ### 0.2 — Read the settings
+# MAGIC
+# MAGIC Fill in the fields at the top (your facilitator provides the catalog + warehouse ID),
+# MAGIC then run this cell. If it stops with a friendly message, a required field is still
+# MAGIC blank — fill it in and re-run this cell.
+
+# COMMAND ----------
+
+WORKSHOP_CATALOG = dbutils.widgets.get("workshop_catalog").strip()
+SQL_WAREHOUSE_ID = dbutils.widgets.get("sql_warehouse_id").strip()
+FMAPI_ENDPOINT = dbutils.widgets.get("fmapi_endpoint").strip()
+LANGSMITH_API_KEY = dbutils.widgets.get("langsmith_api_key").strip()
+AGENT_PORT = 8010  # local port for your agent (your own driver — no collision)
+
+_missing = [label for value, label in [
+    (SQL_WAREHOUSE_ID, "Shared SQL warehouse ID"),
+    (WORKSHOP_CATALOG, "Catalog (you can CREATE SCHEMA in)"),
+] if not value]
+if _missing:
+    dbutils.notebook.exit(
+        "⏸ Fill in these field(s) at the top of the notebook, then re-run this cell: "
+        + ", ".join(_missing)
+    )
+
+print(f"Settings OK — catalog={WORKSHOP_CATALOG}, warehouse={SQL_WAREHOUSE_ID}, "
+      f"model={FMAPI_ENDPOINT}, langsmith={'yes' if LANGSMITH_API_KEY else 'no'}")
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ### 0.3 — Derive your personal namespace and wire up the code
 
 # COMMAND ----------
 
@@ -116,7 +140,7 @@ if HAS_LANGSMITH:
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ### 0.3 — Create your private schema + seed your own sample data
+# MAGIC ### 0.4 — Create your private schema + seed your own sample data
 # MAGIC
 # MAGIC You get your own UC schema, which holds two things:
 # MAGIC - The **sample reference data** the agent queries (`products`, `adverse_events`) —
@@ -147,7 +171,7 @@ print(f"Ready: {WORKSHOP_CATALOG}.{MLFLOW_UC_SCHEMA} "
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ### 0.4 — Launch YOUR Databricks agent (background process on this driver)
+# MAGIC ### 0.5 — Launch YOUR Databricks agent (background process on this driver)
 # MAGIC
 # MAGIC This is the "server" side of the trace. It runs as a local FastAPI process here and
 # MAGIC we'll call it over `localhost`. It's configured with your experiment + schema, so
@@ -317,7 +341,7 @@ if HAS_LANGSMITH:
     print(root.url)
 else:
     print("LangSmith not configured — set LANGSMITH_API_KEY in Module 0 to enable, then "
-          "re-run Module 0.4 (relaunch agent) and Module A.")
+          "re-run Module 0.5 (relaunch agent) and Module A.")
 
 # COMMAND ----------
 

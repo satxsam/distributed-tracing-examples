@@ -42,7 +42,7 @@ GRANT CREATE SCHEMA ON CATALOG workshop TO `<participants-group>`;
 
 `<participants-group>` is whatever account group your attendees are in (or grant to
 `account users` for an internal event). Each participant's schema is created by their
-own notebook run in Module 0.3.
+own notebook run in Module 0.4.
 
 ### 2. Provide a shared SQL warehouse
 
@@ -60,7 +60,7 @@ paste it into Module 0.1.
 **No data setup required.** Each participant's notebook seeds its own copy of the
 sample reference data (`products` + `adverse_events`, from
 [`../shared/sample_data.py`](../shared/sample_data.py)) into their personal schema in
-Module 0.3. This is why they only need `CREATE SCHEMA` on the catalog (step 1) — no one
+Module 0.4. This is why they only need `CREATE SCHEMA` on the catalog (step 1) — no one
 needs pre-existing tables or a shared read grant.
 
 *(For the laptop/manual path, [`../shared/databricks_agent/seed_data.sql`](../shared/databricks_agent/seed_data.sql)
@@ -100,7 +100,7 @@ No GitHub token is needed for a public repo.
 **Zip alternative.** If Git folders aren't available, hand out a zip of the repo;
 participants **Workspace → Import** the whole folder (preserving `shared/`, `workshop/`).
 Either way, if the notebook is moved somewhere the sibling `shared/` no longer resolves,
-set `REPO_ROOT` manually near the top of Module 0.2.
+set `REPO_ROOT` manually near the top of Module 0.3.
 
 ### 7. Compute
 
